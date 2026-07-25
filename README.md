@@ -14,7 +14,9 @@ One caveat that took research to surface: **do not rely on display mirroring**. 
 
 Pre-viability. The two hardware/runtime gates below have not been tested yet. Nothing downstream of them is worth building until they pass. The `calibration/` module is implemented and independently usable today, because it is pure math and does not depend on either gate.
 
-Component specifications have been researched against primary sources and are collected in [docs/hardware-reference.md](docs/hardware-reference.md), which also lists the assumptions that research corrected. Read it before buying anything.
+Component specifications have been researched against primary sources and are collected in [docs/hardware-reference.md](docs/hardware-reference.md), which also lists the assumptions that research corrected and the three things still unknown. Costs and purchase sequencing are in [docs/bill-of-materials.md](docs/bill-of-materials.md). Read both before buying anything.
+
+There is also an open **procurement** question, separate from the two technical gates: Pupil Labs sell eye cameras individually at EUR 685 each, but describe them as upgrades for existing headsets, which suggests they may rely on the Pupil Core frame's internal USB hub. If they cannot be connected standalone, the camera cost jumps from EUR 1,370 to a complete headset at EUR 3,615. One email to Pupil Labs settles it, and it is the cheapest open question to close.
 
 ## Why 2D (not pye3d)
 

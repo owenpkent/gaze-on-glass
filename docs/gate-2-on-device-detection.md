@@ -38,6 +38,12 @@ AOSP's built-in external camera support (UVC through Camera2) is real but unusab
 
 Whichever you pick, the **bandwidth factor** knob is the one that matters, since it is the mitigation for isochronous over-reservation.
 
+## You do not need the expensive cameras to run this gate
+
+Most of Gate 2 can be answered with any IR-capable UVC camera, including the [DIY build](https://docs.pupil-labs.com/core/diy/) (a modified Logitech C525/C512 or Microsoft HD-6000 at under $100 the pair). The detector, the threading model, the decode budget, and the sustained-rate behaviour are all testable without spending EUR 1,370.
+
+What cheap cameras will not tell you: the exact frame budget at 200Hz, global-shutter behaviour during saccades, and how the real modules declare their bandwidth reservation. Those need the real hardware. But if the pipeline cannot hold framerate on a 640x480 rolling-shutter webcam, it will not hold it on two 400x400 streams either, and you will have learned that for $60. See [bill-of-materials.md](bill-of-materials.md).
+
 ## Minimum viable detector
 
 Dark-pupil, in the order the operations should be applied:

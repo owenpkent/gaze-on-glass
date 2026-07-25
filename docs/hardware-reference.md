@@ -25,6 +25,11 @@ Manuals and datasheets are **cited and linked, not vendored** into this repo, si
 | Connector | USB-C (headset uses an internal hub behind one cable) | [tech specs](https://pupil-labs.com/products/core/tech-specs) |
 | Price | **EUR 685 each**, left and right sold separately | [accessories](https://pupil-labs.com/products/core/accessories) |
 | Physical dimensions | **Not published.** Must be measured. | (none) |
+| Standalone connectivity | **Unverified.** See the warning below. | (none) |
+
+> **The individually-sold cameras may not be usable without the Pupil Core frame.** Pupil Labs describe them as being "for upgrading existing 120Hz headsets", fitted with "no tools required". That implies they plug into the Core frame's internal wiring and USB hub, which this project does not have. No source documents whether a standalone camera ships with a host connection usable on its own.
+>
+> This is a procurement blocker, not a technical one, and it is answerable with one email to Pupil Labs. If the answer is no, the cheapest path to real cameras jumps from EUR 1,370 to a complete headset at EUR 3,615. See [bill-of-materials.md](bill-of-materials.md).
 
 ### What this changes
 
@@ -44,13 +49,15 @@ The project assumed 800x600 @ 30 Hz. The real cameras are **192x192 @ 200 Hz**: 
 
 Model matters. Specs differ across the line and this project's calibration is display-geometry-specific.
 
-| Model | Per-eye resolution | Refresh | FOV | Source |
-| --- | --- | --- | --- | --- |
-| VITURE One / One Lite | 1920x1080 | 60 Hz | 43 deg | [VRcompare](https://vr-compare.com/headset/vitureonelite) |
-| VITURE Pro | 1920x1080 | 120 Hz | ~46 deg (est.) | [VRcompare](https://vr-compare.com/headset/viturepro) |
-| VITURE Luma | 1920x1200 | 120 Hz | 50 deg | [VITURE](https://www.viture.com/product/viture-luma-xr-glasses) |
-| VITURE Luma Pro | **1920x1200** | **120 Hz** | **52 deg** | [VITURE](https://www.viture.com/product/viture-luma-pro-xr-glasses) |
-| VITURE Luma Ultra | 1920x1200 | 120 Hz | 52 deg | [VITURE](https://www.viture.com/product/viture-luma-ultra-xr-glasses) |
+| Model | Price | Per-eye resolution | Refresh | Diagonal FOV | Source |
+| --- | --- | --- | --- | --- | --- |
+| VITURE One / One Lite | discontinued | 1920x1080 | 60 Hz | 43 deg | [VRcompare](https://vr-compare.com/headset/vitureonelite) |
+| VITURE Pro | discontinued | 1920x1080 | 120 Hz | ~46 deg (est.) | [VRcompare](https://vr-compare.com/headset/viturepro) |
+| VITURE Luma | $399 | 1920x1200 | 120 Hz | 50 deg | [VITURE](https://www.viture.com/luma) |
+| VITURE Luma Pro | $499 | **1920x1200** | **120 Hz** | **52 deg** | [VITURE](https://www.viture.com/luma) |
+| VITURE Luma Ultra | $599 | 1920x1200 | 120 Hz | 52 deg | [VITURE](https://www.viture.com/luma) |
+
+Display geometry is identical across the Luma line, and the Pro's electrochromic dimming and the Ultra's extra brightness do nothing for gaze tracking. For this project specifically, the $399 Luma is the rational choice. See [bill-of-materials.md](bill-of-materials.md).
 
 Luma Pro detail, from the manufacturer spec table:
 
@@ -217,6 +224,18 @@ Note also that Pupil Core calibrates with **5 points** where this project specif
 - Pupil Labs' own [VR/AR add-ons](https://pupil-labs.com/products/vr-ar) for Quest 3, Pico 4, Vive, HoloLens, and Epson Moverio: clip-on rings with IR illuminators and a USB connector clip. Commercial validation of the mount-cameras-to-someone-else's-headset approach. Quest 3 module mount is H30 x W39 x D19 mm at 10 g, which is a rough scale reference for what this project's mount must carry.
 
 ---
+
+## Still unknown
+
+Three things this research could not settle. Each is listed where it bites, but they are collected here because together they are the project's remaining risk surface.
+
+| Unknown | Why it matters | How to settle it |
+| --- | --- | --- |
+| **VITURE DP lane count** (2-lane or 4-lane) | Decides whether USB 3.x survives alongside video, and therefore how much bandwidth headroom the cameras have | [Gate 1](gate-1-usb-enumeration-test.md). Not published by VITURE, not in any teardown found. |
+| **Pupil eye camera dimensions** | The mount cannot be parameterised correctly without them | Calipers, once the cameras are in hand. Pupil's [published mount geometry](https://github.com/pupil-labs/pupil-geometry) is the interim reference (LGPL-3.0, measure but do not copy). |
+| **Whether standalone eye cameras connect without the Core frame** | Decides whether the camera cost is EUR 1,370 or EUR 3,615 | One email to Pupil Labs. Cheapest unknown to close, and worth closing first. |
+
+Nothing else in this document is speculative: every other figure traces to a cited primary source.
 
 ## Corrections this research forced
 
