@@ -33,7 +33,7 @@ A 2D dark-pupil detector feeding a polynomial calibration is the correct design 
 
 ## Hardware
 
-Full specifications with citations: [docs/hardware-reference.md](docs/hardware-reference.md).
+Full specifications with citations: [docs/hardware-reference.md](docs/hardware-reference.md). Prices, part choices, and purchase sequencing: [docs/bill-of-materials.md](docs/bill-of-materials.md).
 
 - **VITURE XR glasses** (Sony Micro-OLED birdbath, USB-C DP Alt Mode video in). Luma Pro is 1920x1200 per eye at 120Hz, 52 deg diagonal FOV; older One/Pro models are 1920x1080 at 43 to 46 deg. No battery: the glasses draw about 5W from the host.
 - **Pupil Core eye cameras**, UVC, IR, dark-pupil, **192x192 @ 200Hz or 400x400 @ 120Hz**, global shutter, 4.5ms latency, **IR illumination integrated into the module**. They enumerate as `Pupil Cam 3 ID0` / `ID1` and are fully UVC compliant. EUR 685 each, so EUR 1,370 for a pair, which is the dominant cost of this build.

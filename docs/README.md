@@ -3,6 +3,7 @@
 | Document | What it covers |
 | --- | --- |
 | [hardware-reference.md](hardware-reference.md) | **Start here.** Researched specs for every component, with citations, plus the project assumptions that research corrected. |
+| [bill-of-materials.md](bill-of-materials.md) | What to buy, what it costs, and the order to buy it in so the cheap tests happen before the expensive purchases. |
 | [gate-1-usb-enumeration-test.md](gate-1-usb-enumeration-test.md) | The viability test to run first: video out and two cameras in through one USB-C port. Needs no code. |
 | [gate-2-on-device-detection.md](gate-2-on-device-detection.md) | The second viability test: two UVC streams and pupil detection at 120 to 200Hz on the phone. |
 | [ir-illumination-and-optics.md](ir-illumination-and-optics.md) | Dark-pupil illumination, safety, and the birdbath reflection problem. |

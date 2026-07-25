@@ -45,7 +45,7 @@ For scale, Pupil Labs' own Quest 3 add-on module mount is 30 x 39 x 19 mm at 10 
 - Print the arm so layer lines run across its length, not along it. A part that delaminates at the arm root fails in exactly the direction that matters.
 - 4 perimeters, 40%+ infill. This part is small; the material cost of over-building it is negligible against the cost of a recalibration every twenty minutes.
 - No supports needed if the camera pocket opens upward on the plate.
-- M3 screw and nut per side for the clamp.
+- M3 screw and nut per side for the clamp. Full parts list: [../docs/bill-of-materials.md](../docs/bill-of-materials.md).
 
 ## The clearance problem
 
