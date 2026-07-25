@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaze-calibration"
+version = "0.1.0"
+description = "Framework-agnostic 2D pupil-to-screen polynomial gaze calibration"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Owen Kent" }]
+keywords = ["eye-tracking", "gaze", "calibration", "pupil", "xr"]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.urls]
+Homepage = "https://github.com/owenpkent/gaze-on-glass"
+
+[tool.setuptools.packages.find]
+include = ["gaze_calibration*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
