@@ -23,7 +23,7 @@ Measure both anyway. The reservation behaviour may differ (see [Gate 1](gate-1-u
 
 **Android's Java USB host API does not support isochronous transfers.** `UsbDeviceConnection` handles control, bulk, and interrupt only. UVC video streaming is isochronous. The platform API therefore cannot stream from a webcam at all, at any resolution.
 
-Every working Android UVC library resolves this identically: take the file descriptor from `UsbDeviceConnection`, hand it to a native libusb built against Android's usbfs, and run libuvc on top. This is userspace. It needs **no root and no kernel UVC driver**, which corrects an earlier assumption in this project: LineageOS is valuable here for unrestricted USB host access and ROM control, not for a `uvcvideo` module.
+Every working Android UVC library resolves this identically: take the file descriptor from `UsbDeviceConnection`, hand it to a native libusb built against Android's usbfs, and run libuvc on top. This is userspace. It needs **no root and no kernel UVC driver**, which corrects an earlier assumption in this project: a custom ROM was never required, and stock Android is the better target. Persistent USB permission comes from a manifest intent filter, and `CAMERA` permission is required on Android 9 and later even though you are not using the platform camera.
 
 AOSP's built-in external camera support (UVC through Camera2) is real but unusable here: the reference configuration caps at 30fps/640x480, 15fps/720p, 10fps/1080p, and the documentation states it is "not designed to support performance-intensive, complex tasks involving high-resolution and high-speed streaming," targeting "lightweight use cases such as video chatting and photo kiosks."
 

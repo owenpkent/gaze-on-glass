@@ -1,6 +1,6 @@
 # Gaze on Glass
 
-Open-source, single-device gaze tracking for VITURE XR glasses using Pupil Core eye cameras, running entirely on an Android (LineageOS) phone.
+Open-source, single-device gaze tracking for VITURE XR glasses using Pupil Core eye cameras, running entirely on a stock Android phone. No root, no custom ROM.
 
 ## What this is
 
@@ -37,7 +37,7 @@ Full specifications with citations: [docs/hardware-reference.md](docs/hardware-r
 
 - **VITURE XR glasses** (Sony Micro-OLED birdbath, USB-C DP Alt Mode video in). Luma Pro is 1920x1200 per eye at 120Hz, 52 deg diagonal FOV; older One/Pro models are 1920x1080 at 43 to 46 deg. No battery: the glasses draw about 5W from the host.
 - **Pupil Core eye cameras**, UVC, IR, dark-pupil, **192x192 @ 200Hz or 400x400 @ 120Hz**, global shutter, 4.5ms latency, **IR illumination integrated into the module**. They enumerate as `Pupil Cam 3 ID0` / `ID1` and are fully UVC compliant. EUR 685 each, so EUR 1,370 for a pair, which is the dominant cost of this build.
-- **Android phone running LineageOS**, for USB host access and an unsandboxed hardware path. It must support DP Alt Mode, which most phones do not; confirm the intersection of DP Alt Mode, a LineageOS build, and USB host before buying.
+- **Android phone**, stock firmware. Nothing in this pipeline needs root or a custom ROM: UVC capture runs in userspace over the USB host API, and everything else is public API. The binding constraint is **DP Alt Mode**, which most phones lack and many spec sheets do not mention. A custom ROM is if anything a liability here, since DP Alt Mode output is vendor-specific and is a known casualty of custom ROMs.
 - **USB-C hub** passing DP Alt Mode video out AND a downstream UVC data path in.
 - **Custom rigid mount** fixing the eye cameras to the VITURE frame.
 
@@ -72,7 +72,7 @@ Gates 1 and 2 together are the "does this work at all" checkpoint.
 ## Architecture
 
 ```
-VITURE glasses (mirrored display)  <-- DP Alt Mode video --  [ Phone / LineageOS ]
+VITURE glasses (Presentation display) <- DP Alt Mode video --  [ Android phone      ]
 Pupil Core eye cameras (IR, UVC)   --> UVC frames -------->  [ 1. UVC capture     ]
                                                              [ 2. 2D pupil detect ]
                                                              [ 3. calib mapping   ]

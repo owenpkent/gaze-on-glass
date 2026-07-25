@@ -26,6 +26,8 @@ android-app/
 
 **Library: [ernestp/AndroidUSBCamera](https://github.com/ernestp/AndroidUSBCamera)** as the default, with [shiyinghan/UVCAndroid](https://github.com/shiyinghan/UVCAndroid) as the alternative. Both are maintained; the widely-cited saki4510t/UVCCamera has been dormant since January 2017. Verify the license of whichever fork is chosen: the family is Apache-2.0 but the bundled `jni/libjpeg`, `jni/libusb`, and `jni/libuvc` carry their own terms.
 
+**Stock Android, no root.** Every piece of this is public API or userspace: libusb over usbfs for capture, `Presentation` for rendering, a loopback socket for output. Two permission details that are easy to miss: `CAMERA` permission is required on Android 9+ for UVC access even though the platform camera stack is unused, and persistent USB permission comes from a `USB_DEVICE_ATTACHED` intent filter plus `device_filter.xml`, which avoids a permission dialog on every attach. Prefer stock OEM firmware over a custom ROM, since DP Alt Mode video out is vendor HAL territory and breaks on custom ROMs often enough to be a documented LineageOS issue.
+
 **Expose the bandwidth factor.** It is the mitigation for USB isochronous over-reservation, which is the most likely way two cameras fail to stream simultaneously. It needs to be reachable from the app, not buried, because tuning it is part of bring-up.
 
 **Operating point: 400x400 @ 120Hz, probably.** The cameras also offer 192x192 @ 200Hz. Screen pointing does not need 200Hz, and at 192x192 a one-pixel centroid error is 1/192 of the image against 1/400, so the extra resolution converts directly into accuracy. Make it configurable and measure both in Gate 2, including which mode reserves less bandwidth.

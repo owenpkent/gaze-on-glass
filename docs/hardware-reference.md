@@ -153,11 +153,24 @@ This corrects the repo's earlier recommendation, which named the dormant 2017 li
 
 OpenCV 4.14.0 and 5.0.0 are released; Android SDK ships as `opencv-<version>-android-sdk.zip`. **Use the `16kb-page-fix` variant**: the standard SDK was built with an older NDK and its C++ runtime is not aligned for 16 KB page devices, which is a Google Play requirement now. Apache-2.0, so the licensing premise holds. ([Android release notes](https://github.com/opencv/opencv/wiki/Android_Release_Notes))
 
+### Stock Android is sufficient, and is the better target
+
+Nothing in this pipeline needs root or a custom ROM:
+
+- **UVC capture**: the libusb-over-usbfs path works on non-rooted devices by design; that is the entire premise of the UVCCamera family ("access to UVC web camera on **non-rooted** Android device").
+- **Persistent USB permission**: granted by declaring a `USB_DEVICE_ATTACHED` intent filter with a `device_filter.xml` in the manifest. When the user picks the app as default for that device, the system grants permission automatically on every subsequent attach, with no per-connect dialog. ([UVCCamera wiki](https://github.com/saki4510t/UVCCamera/wiki/howto_hold_permanent_permission))
+- **`CAMERA` permission is still required** on Android 9 and later for UVC access, even though the platform camera stack is not being used. ([AOSP](https://source.android.com/docs/core/camera/external-usb-cameras))
+- **`Presentation` rendering, loopback sockets, foreground services**: all public API.
+
+**A custom ROM is, if anything, a liability here.** DP Alt Mode video output depends on vendor display HAL code, and it is a known casualty of custom ROMs: LineageOS carries open issues for USB-C video out not working on devices including the OnePlus 9 Pro ([#6769](https://gitlab.com/LineageOS/issues/android/-/issues/6769)) and Samsung S10e ([#4658](https://gitlab.com/LineageOS/issues/android/-/issues/4658)). Samsung DeX, the most reliable external-display implementation on Android, is proprietary and does not survive the switch either.
+
+Since working video out is the scarcest capability in the whole design, the correct default is **stock OEM firmware**.
+
 ### Host phone requirement
 
 The phone needs DP Alt Mode, which is **not common**: mostly Samsung Galaxy S/Note flagships, some Sony, Huawei, and gaming phones. Budget and mid-range USB-C phones usually lack it, and the spec sheet often does not mention it either way. Pixels through Pixel 8 required root or were disabled. ([UPERFECT list](https://uperfect.com/blogs/wikimonitor/list-of-smartphones-with-displayport-alt-mode))
 
-The binding constraint for this project is the **intersection** of: has DP Alt Mode, has a LineageOS build, has USB host, and has the compute headroom. Confirm a specific handset satisfies all four before buying anything.
+The binding constraint is the intersection of: has DP Alt Mode **that actually works in the firmware you will run**, has USB host, and has the compute headroom. Confirm on the specific handset before buying anything, and confirm it on the firmware you intend to keep.
 
 ---
 
@@ -201,6 +214,7 @@ Note also that Pupil Core calibrates with **5 points** where this project specif
 | --- | --- | --- |
 | Eye cameras 800x600 @ 30 Hz | **192x192 @ 200 Hz or 400x400 @ 120 Hz** | Gate 2 budget, bandwidth math, latency, and a new resolution-vs-rate decision |
 | "Requires UVC kernel support, which LineageOS provides" | Kernel UVC driver **not needed**; Java USB API **cannot** do isochronous, so native libusb/libuvc is mandatory | Gate 2 architecture |
+| LineageOS required for unsandboxed hardware access | **Stock Android is sufficient and safer.** No root needed anywhere, and custom ROMs are a documented cause of DP video-out breaking | Host phone choice, Gate 1 setup |
 | Recommend saki4510t/UVCCamera | Dormant since 2017; use **ernestp/AndroidUSBCamera** or shiyinghan/UVCAndroid | android-app plan |
 | Bandwidth is the Gate 1 risk | **Isochronous over-reservation** is the Gate 1 risk; raw throughput is comfortable | Gate 1 procedure and mitigations |
 | IR illuminator placement is a design task | Illumination is **integrated into the camera module** | ir-illuminator-placement.md scope |

@@ -36,7 +36,7 @@ The symptom is not a slow stream. It is the second camera failing to open, typic
 
 ## What you need
 
-- LineageOS phone with USB host **and DP Alt Mode**. Verify the phone actually has DP Alt Mode first; most phones do not, and many spec sheets do not mention it either way.
+- Android phone with USB host **and working DP Alt Mode video out**. Stock firmware; root and custom ROMs are not needed and custom ROMs frequently break DP output. Verify video out actually works on your handset before anything else: most phones lack DP Alt Mode entirely, and many spec sheets do not mention it either way.
 - USB-C hub claiming DP Alt Mode passthrough **and** downstream USB data ports
 - VITURE XR glasses
 - **Two** cheap UVC webcams. Two is the test. One camera proves almost nothing, because over-reservation only bites on the second. Do not risk the EUR 685-each Pupil cameras on the first attempt, and do not let a Pupil-specific quirk get mistaken for a topology failure.
@@ -88,7 +88,7 @@ Fill this in and keep it. It is the single most useful artifact for anyone else 
 | Item | Value |
 | --- | --- |
 | Phone / SoC | |
-| LineageOS version, kernel | |
+| Android version / firmware | |
 | Hub make and model | |
 | VITURE model | |
 | Glasses show a display | yes / no |
