@@ -4,7 +4,7 @@ Open-source, single-device gaze tracking for VITURE XR glasses using Pupil Core 
 
 ## What this is
 
-A phone drives the VITURE glasses as a mirrored display over USB-C DP Alt Mode. Pupil Core IR eye cameras are rigidly mounted to the VITURE frame and connect to the same phone over UVC. The phone detects the pupil, maps it to screen coordinates via a calibration, and emits gaze as a stream any local app can consume. No desktop host, no second device, no Pupil Capture.
+A phone drives the VITURE glasses as a second display over USB-C DP Alt Mode. Pupil Core IR eye cameras are rigidly mounted to the VITURE frame and connect to the same phone over UVC. The phone detects the pupil, maps it to screen coordinates via a calibration, and emits gaze as a stream any local app can consume. No desktop host, no second device, no Pupil Capture.
 
 The core insight: because the glasses present the phone's framebuffer on a single fixed focal plane, "where the user looks" is just a 2D pupil-to-screen-pixel mapping. No head pose, no world-space gaze vector, no VITURE SDK. That collapses the hard AR coordinate-fusion problem into a flat 2D calibration.
 
@@ -21,7 +21,7 @@ Component specifications have been researched against primary sources and are co
 pye3d's 3D eye model exists mainly to compensate for headset slippage and to produce accurate world-space gaze vectors with corneal refraction correction. This project engineers both away:
 
 - Cameras are rigidly mounted, so slippage is minimized by hardware, not modeled in software.
-- The target is a flat, fixed-focal-plane display mirrored 1:1, so a 2D pupil to 2D screen mapping is the mathematically appropriate tool.
+- The target is a flat display at a single fixed focal plane, rendered 1:1, so a 2D pupil to 2D screen mapping is the mathematically appropriate tool.
 
 A 2D dark-pupil detector feeding a polynomial calibration is the correct design here, not a downgrade. It also keeps licensing clean (OpenCV Apache-2, no non-LGPL pye3d entanglement).
 
@@ -72,12 +72,12 @@ Gates 1 and 2 together are the "does this work at all" checkpoint.
 ## Architecture
 
 ```
-VITURE glasses (Presentation display) <- DP Alt Mode video --  [ Android phone      ]
-Pupil Core eye cameras (IR, UVC)   --> UVC frames -------->  [ 1. UVC capture     ]
-                                                             [ 2. 2D pupil detect ]
-                                                             [ 3. calib mapping   ]
-                                                             [ 4. gaze emit       ]  --> local apps
-       (all four stages on the phone, single device)
+VITURE glasses (secondary display)  <-- DP Alt Mode video --  [ Android phone      ]
+Pupil Core eye cameras (IR, UVC)    --> UVC frames -------->  [ 1. UVC capture     ]
+                                                              [ 2. 2D pupil detect ]
+                                                              [ 3. calib mapping   ]
+                                                              [ 4. gaze emit       ]  --> local apps
+        (all four stages on the phone, single device)
 ```
 
 ## The 2D pipeline
@@ -108,13 +108,15 @@ Walkthrough: [docs/calibration-walkthrough.md](docs/calibration-walkthrough.md).
 gaze-on-glass/
   android-app/     UVC capture, OpenCV 2D pupil detection, calibration UI, gaze emission
   calibration/     polynomial fit + validation, framework-agnostic, independently usable
-  mount/           parametric CAD for the rigid camera mount (OpenSCAD source + STL)
+  mount/           parametric OpenSCAD source for the rigid camera mount (STLs not committed)
   protocol/        gaze output format spec (local socket / intent / broadcast)
   docs/            researched hardware reference, the two gate procedures, IR illumination,
                    calibration walkthrough, expected accuracy, slippage caveat
   README.md
   LICENSE
 ```
+
+Every directory has its own README. [docs/](docs/README.md) is the index for the written material.
 
 ## The mount (physical crux)
 
@@ -133,8 +135,10 @@ See [mount/](mount/).
 - Code: Apache-2.0 ([LICENSE](LICENSE)).
 - Mount CAD: CERN-OHL-S v2 ([mount/LICENSE](mount/LICENSE)).
 - OpenCV: Apache-2, clean.
+- **Android UVC libraries: check before shipping.** The UVCCamera family is Apache-2.0, but the bundled natives are not uniformly so: `libusb` is LGPL-2.1, `libuvc` is BSD, and `libjpeg` carries its own terms. LGPL-2.1 is satisfied by dynamic linking; static linking brings obligations. This is the one place the app's licensing is not automatically clean, and it needs deciding before release rather than after.
+- **Pupil Labs mount geometry: reference only.** [pupil-geometry](https://github.com/pupil-labs/pupil-geometry) is LGPL-3.0. Measuring it to determine the camera interface is fine; copying or adapting the model would make the mount a derivative work under LGPL-3.0, conflicting with CERN-OHL-S.
 - pye3d: NOT used in v1. It is not LGPL (permitted standalone only for academic use, or commercial use with official Pupil Core hardware). Keeping it out of v1 keeps the license clean. If added later as an optional high-accuracy module, its terms will be documented clearly.
-- VITURE SDK: not required. Glasses are used purely as a mirrored display.
+- VITURE SDK: not required. The glasses are used purely as a USB-C display.
 
 ## Critical-path order
 

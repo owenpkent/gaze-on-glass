@@ -1,0 +1,8 @@
+# Normalize line endings. Without this, tooling on Windows silently rewrites
+# whole files as CRLF and every edit looks like a full-file diff.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.stl binary
+*.3mf binary

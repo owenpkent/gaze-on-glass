@@ -24,7 +24,7 @@ Manuals and datasheets are **cited and linked, not vendored** into this repo, si
 | Stream format | MJPEG | [Vive add-on docs](https://docs.pupil-labs.com/core/vr-ar/vive/) |
 | Connector | USB-C (headset uses an internal hub behind one cable) | [tech specs](https://pupil-labs.com/products/core/tech-specs) |
 | Price | **EUR 685 each**, left and right sold separately | [accessories](https://pupil-labs.com/products/core/accessories) |
-| Physical dimensions | **Not published.** Must be measured. | — |
+| Physical dimensions | **Not published.** Must be measured. | (none) |
 
 ### What this changes
 
@@ -67,7 +67,17 @@ Luma Pro detail, from the manufacturer spec table:
 
 ### FOV numbers are diagonal
 
-The 43 / 46 / 52 degree figures are **diagonal** FOV. The calibration module wants horizontal and vertical FOV to convert error into degrees. For a 16:10 panel at 52 deg diagonal, horizontal is roughly 44 deg and vertical roughly 28 deg. Derive these for your model rather than passing the diagonal figure to `fit_profile`, or the reported angular error will be wrong by a large factor.
+The 43 / 46 / 52 degree figures are **diagonal** FOV. The calibration module wants horizontal and vertical FOV to convert error into degrees.
+
+| Model | Panel | Diagonal | Horizontal | Vertical |
+| --- | --- | --- | --- | --- |
+| Luma / Luma Pro / Luma Ultra | 1920x1200 (16:10) | 50 to 52 deg | ~45 deg | ~29 deg |
+| VITURE Pro | 1920x1080 (16:9) | ~46 deg | ~41 deg | ~23 deg |
+| VITURE One | 1920x1080 (16:9) | 43 deg | ~38 deg | ~22 deg |
+
+Derived by rectilinear projection: `tan(h/2) = tan(d/2) * w/sqrt(w^2+h^2)`. Approximate, since these are not perfectly rectilinear optics, but far closer than using the diagonal directly.
+
+Derive these for your model rather than passing the diagonal figure to `fit_profile`. Passing the diagonal overstates horizontal error by about 15% and vertical by nearly 80%.
 
 ### The aspect-ratio trap (new, and it matters)
 
