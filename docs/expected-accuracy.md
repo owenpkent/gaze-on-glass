@@ -10,16 +10,36 @@ What this design should achieve, why, and what it will not.
 
 This is the normal band for 2D polynomial regression eye tracking. It is not a compromise figure: on a fixed focal plane with a rigidly mounted camera, a 2nd-order polynomial is the right model, and 2D approaches routinely land here. Sub-degree is achievable with good conditions and shows up in the synthetic tests in `calibration/tests/`, but real detection noise, real fixation instability, and real optics all cost you something.
 
+For calibration, published figures on comparable hardware:
+
+| System | Figure |
+| --- | --- |
+| Pupil Core, full 3D pipeline, calibrated | 0.60 deg accuracy, 0.02 deg precision |
+| Pupil Labs Neon, uncalibrated | 1.8 deg |
+| Pupil Labs Neon, with offset correction | 1.3 deg |
+
+So 1 to 2 degrees for a 2D polynomial sits below Pupil's own 3D pipeline with better software behind it, and roughly level with a calibration-free deep-learning tracker after offset correction. That is the right place for this design to aim.
+
 ## What that means on screen
 
-For a VITURE-class display, roughly 36 degrees horizontal at 1920 pixels wide:
+**Published VITURE FOV figures are diagonal.** Converting to the horizontal and vertical the calibration module wants:
+
+| Model | Panel | Diagonal FOV | Horizontal | Vertical |
+| --- | --- | --- | --- | --- |
+| Luma / Luma Pro / Luma Ultra | 1920x1200 (16:10) | 50 to 52 deg | ~45 deg | ~29 deg |
+| VITURE Pro | 1920x1080 (16:9) | ~46 deg | ~41 deg | ~23 deg |
+| VITURE One | 1920x1080 (16:9) | 43 deg | ~38 deg | ~22 deg |
+
+Passing the diagonal figure to `fit_profile` instead of the horizontal and vertical pair will overstate your angular error by roughly 15% horizontally and nearly double it vertically.
+
+For a Luma Pro at ~45 deg horizontal across 1920 px, about **43 px per degree**:
 
 | Accuracy | Screen error | Practical meaning |
 | --- | --- | --- |
-| 0.5 deg | ~27 px | Small UI elements are selectable. |
-| 1.0 deg | ~53 px | Comfortable for buttons and list rows. |
-| 2.0 deg | ~107 px | Coarse regions only. Large targets, or gaze plus a confirm action. |
-| 3.0 deg | ~160 px | Not usable for pointing. |
+| 0.5 deg | ~21 px | Small UI elements are selectable. |
+| 1.0 deg | ~43 px | Comfortable for buttons and list rows. |
+| 2.0 deg | ~85 px | Coarse regions only. Large targets, or gaze plus a confirm action. |
+| 3.0 deg | ~128 px | Not usable for pointing. |
 
 The design implication: build interactions around targets of at least 100px, or pair gaze with dwell or a click. Do not design a gaze-driven cursor that expects pixel precision, at any accuracy in this band.
 
@@ -29,7 +49,7 @@ Substitute your own display's FOV and resolution; pass `fov_degrees` to `fit_pro
 
 Roughly in order of expected contribution:
 
-**Pupil centroid noise.** Threshold-based detection on a noisy IR image gives a centroid that jitters by a pixel or two frame to frame. Over an 800x600 image mapped to a 36-degree FOV, a pixel of pupil jitter is a meaningful fraction of a degree. Mitigations: better illumination, longer exposure, light temporal smoothing (at the cost of latency).
+**Pupil centroid noise.** Threshold-based detection on a noisy IR image gives a centroid that jitters by a pixel or two frame to frame. This is the largest single error source, and the eye camera resolution sets its scale directly: at **192x192** one pixel is 1/192 of the image, at **400x400** it is 1/400. That is the whole argument for preferring 400x400 @ 120Hz over 192x192 @ 200Hz for this application. Other mitigations: better illumination, longer exposure, light temporal smoothing (at the cost of latency).
 
 **Fixation instability.** The eye does not hold still. Microsaccades and drift move gaze by a fraction of a degree even during a deliberate fixation. This is a floor, not a bug, and it is why `FixationCollector` averages a burst rather than taking a single frame.
 
@@ -48,15 +68,18 @@ Roughly in order of expected contribution:
 
 ## Latency, which matters as much as accuracy
 
-Accuracy gets quoted and latency gets felt. Budget:
+Accuracy gets quoted and latency gets felt. **This is where the real cameras beat the project's original assumptions by a wide margin**, because they run at 120 to 200Hz rather than the 30Hz first assumed.
 
-| Stage | Expected |
-| --- | --- |
-| Camera exposure and USB transfer | ~33ms at 30Hz, one frame period |
-| Detection | under 16ms for two eyes (Gate 2 target) |
-| Mapping and emission | negligible, a 6-term polynomial evaluation |
-| Consumer app response | its own problem |
+| Stage | 400x400 @ 120Hz | 192x192 @ 200Hz |
+| --- | --- | --- |
+| Camera latency (specified) | 4.5 ms | 4.5 ms |
+| Frame period | 8.3 ms | 5.0 ms |
+| MJPEG decode + detection, two eyes | must fit the frame period (Gate 2 target) | must fit the frame period |
+| Mapping and emission | negligible, a 6-term polynomial evaluation | negligible |
+| Display: one frame at 120Hz | 8.3 ms | 8.3 ms |
 
-So roughly 50 to 70ms end to end at 30Hz. That is fine for dwell selection and for a smoothed cursor. It is noticeably laggy for anything expecting the cursor to feel attached to the eye, and no amount of accuracy work changes that. If latency matters more than accuracy for your use case, the lever is camera framerate, not the detector.
+Roughly **25 to 35 ms end to end**, against the 50 to 70 ms originally budgeted at 30Hz. That is comfortably into "feels attached to the eye" territory for a smoothed cursor, not just dwell selection, and it is the single biggest thing the hardware research improved.
+
+Note the consequence for the resolution choice: since even 120Hz already puts total latency below the perceptual threshold for this kind of interaction, **spending the difference on spatial resolution rather than framerate is the right trade**. 200Hz buys 3.3 ms of latency you will not notice; 400x400 buys centroid precision you will.
 
 Any temporal smoothing you add trades latency for stability directly. Add it deliberately, at the consumer end where the tradeoff can be tuned per use case, rather than baking it into the gaze stream.

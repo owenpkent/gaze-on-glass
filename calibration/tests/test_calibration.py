@@ -25,9 +25,9 @@ from gaze_calibration import (
     validate_profile,
 )
 
-IMAGE_SIZE = (800, 600)
-SCREEN_SIZE = (1920, 1080)
-FOV = (36.0, 20.0)
+IMAGE_SIZE = (400, 400)   # Pupil Core eye camera, 400x400 @ 120Hz
+SCREEN_SIZE = (1920, 1200)  # VITURE Luma-series glasses display
+FOV = (45.0, 29.0)  # horizontal/vertical, derived from 52 deg diagonal at 16:10
 
 
 def synthetic_pupil(screen: np.ndarray, eye: Eye = Eye.LEFT) -> np.ndarray:
@@ -233,7 +233,7 @@ class TestProfile:
 
     def test_to_pixels(self):
         profile, _ = self.build()
-        assert np.allclose(profile.to_pixels([0.5, 0.5]), [960.0, 540.0])
+        assert np.allclose(profile.to_pixels([0.5, 0.5]), [960.0, 600.0])
 
     def test_roundtrip_through_json(self, tmp_path):
         profile, _ = self.build()

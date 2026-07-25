@@ -27,6 +27,12 @@ clamp_opening    = 3.0;   // mm, width of the split the screw closes
 
 /* [Camera - MEASURE THESE] */
 // Pupil Core eye camera module body. Rectangular pocket, camera looks along +Z.
+// Pupil Labs do not publish camera dimensions. Measure your module, or take
+// measurements from their published mount geometry (LGPL-3.0, reference only,
+// do not copy the model into this file): github.com/pupil-labs/pupil-geometry
+// 200Hz cameras are FIXED FOCUS, so pocket depth sets working distance and is
+// not recoverable by refocusing later. IR illumination is integrated into the
+// module, so cam_elevation/cam_yaw aim the light as well as the lens.
 cam_body_w       = 12.0;  // mm
 cam_body_h       = 12.0;  // mm
 cam_body_d       = 8.0;   // mm, depth of the pocket

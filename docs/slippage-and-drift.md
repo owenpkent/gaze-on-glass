@@ -13,7 +13,7 @@ That silence is what makes slippage the serious failure mode. Detection failure 
 pye3d's 3D eye model exists in large part to solve exactly this: fit an eye model, track the eyeball center, and stay accurate as the headset shifts. Adopting it would bring three costs:
 
 1. **Licensing.** pye3d is not LGPL. Standalone use is permitted for academic purposes; commercial use is tied to official Pupil Core hardware. Keeping it out of v1 keeps this repo cleanly Apache-2.
-2. **Compute.** The 3D model is meaningfully heavier than a threshold and an ellipse fit, and Gate 2 already has to prove two eyes at 30Hz on a phone.
+2. **Compute.** The 3D model is meaningfully heavier than a threshold and an ellipse fit, and Gate 2 already has to prove two eyes at 120 to 200Hz on a phone, which is a 5 to 8ms budget per frame pair including MJPEG decode.
 3. **Complexity, for a benefit this design largely does not need.** The target is a flat display mirrored 1:1. A 2D mapping is the mathematically appropriate tool for that; the 3D model's world-space gaze vector is machinery this project has no use for.
 
 So the tradeoff is deliberate: engineer slippage away in hardware rather than model it in software. That only holds if the hardware side is taken seriously, which is why the mount is treated as load-bearing rather than as packaging.

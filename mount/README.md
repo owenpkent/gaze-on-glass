@@ -27,7 +27,13 @@ Grouped as customizer sections in the source.
 
 **Frame interface.** `frame_width`, `frame_height`, `frame_corner_r` are the cross-section of the rail the clamp grips. Measure with calipers at the exact point you intend to clamp; the VITURE arm is not a constant section. `clamp_gap` (default 0.25mm) is the slide-on clearance: reduce it before you reduce anything else if the clamp feels loose, since a loose clamp is drift.
 
-**Camera pocket.** `cam_body_w/h/d` are the Pupil Core module body. `cam_lens_d` is the lens bore. `cam_cable_w` is the cable exit slot. Verify against your actual module, since Pupil Core camera assemblies vary by revision.
+**Camera pocket.** `cam_body_w/h/d` are the Pupil Core module body. `cam_lens_d` is the lens bore. `cam_cable_w` is the cable exit slot.
+
+Pupil Labs do not publish eye camera dimensions, so these must be measured. They do publish mount geometry at [pupil-labs/pupil-geometry](https://github.com/pupil-labs/pupil-geometry) (DIY set, headset triangle mount, ball-joint arm, arm extender), stating that "by releasing the mounts as example geometry we automatically document the interface" and that you should take measurements from them for your own mounts. That is the best available reference for the camera-side interface.
+
+**License caution:** pupil-geometry is **LGPL-3.0**. Measuring their geometry to determine an interface is fine. Copying or adapting their model into this repo would make the result a derivative work under LGPL-3.0, which conflicts with the CERN-OHL-S license this directory uses. Keep this mount an independent design that mates with a measured interface.
+
+For scale, Pupil Labs' own Quest 3 add-on module mount is 30 x 39 x 19 mm at 10 g including the module, which is roughly what this mount has to carry per side.
 
 **Aim geometry, the part that needs iteration.** `cam_elevation` (default 38 degrees) is the up-tilt from horizontal; 30 to 45 is the useful band. `cam_yaw` (default 12 degrees) angles the camera inward toward the nose. `arm_drop` and `arm_forward` place the camera in space relative to the clamp. These four are what you will actually spend prints on.
 
@@ -47,9 +53,13 @@ Birdbath optics sit close to the eye, and that is the hard constraint. The camer
 
 A useful shortcut: before printing anything, hold the bare camera by hand at the intended position and watch the raw feed while looking around the display. If you cannot find a hand-held position that keeps the pupil in frame at all nine calibration targets, no amount of printing will fix it, and the geometry needs rethinking.
 
+Two things make the aim harder than it looks. The camera is **fixed focus** at 200Hz (the lens is glued; only the 120Hz cameras focus manually), so working distance is a hard constraint rather than something you tune afterwards. And the module's IR illumination is integrated, so the same angle that frames the pupil also determines whether the birdbath combiner reflects the illuminator back into its own lens.
+
+Note the deliberate divergence from Pupil's own design here: the Core headset mounts eye cameras on a sliding arm with a 6-DOF ball joint, tensioned so the camera can be moved by hand. That is right for a research device used across many faces, and wrong for this one. Adjustability and calibration stability are in direct tension, and this project has already traded slippage robustness away in software, so it cannot afford to give any back in hardware. Set the angle parametrically, print it, and let it be rigid.
+
 ## IR illumination
 
-See [../docs/ir-illuminator-placement.md](../docs/ir-illuminator-placement.md). Illuminator geometry interacts with mount geometry: the birdbath coating is reflective in near-IR and will happily bounce your own illuminator back into the camera as a large bright artifact. Placement is a joint decision with the camera angle, not a separate one.
+See [../docs/ir-illumination-and-optics.md](../docs/ir-illumination-and-optics.md). Pupil Core cameras have **IR illumination integrated into the module**, so the mount's camera angle is also the illumination angle: one lever, three constraints. The birdbath coating is reflective in near-IR and will happily bounce the module's own illumination back into its own lens. A small baffle shielding the module from throwing light forward is cheap to add here and does more than any amount of software.
 
 ## License
 

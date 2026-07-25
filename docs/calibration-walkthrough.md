@@ -8,6 +8,7 @@ The math lives in [`calibration/`](../calibration/) and is usable standalone. Th
 
 Calibration cannot fix bad input. Confirm first:
 
+- Targets are rendered through the `Presentation` API to the glasses display, not mirrored. If the image is letterboxed, normalized coordinates describe the phone panel rather than what the user sees, and the calibration will be fitted against the wrong geometry. See [hardware-reference.md](hardware-reference.md).
 - Pupil detected reliably (above 95%) at neutral gaze, and **still detected when looking at each corner of the display**. Corner detection is the usual failure and it is an illumination or camera-aim problem, not a calibration problem.
 - Glasses seated the way they will be worn. Calibrate in the position you will use.
 - Mount rigid. Press gently on the camera arm: if the pupil position in the feed shifts, calibration is going to drift and the mount needs work before anything else.
@@ -41,7 +42,7 @@ else:
     retry(target, reason=result.reason)
 ```
 
-800ms per target is a reasonable dwell: roughly 300ms for the saccade and overshoot to settle, 500ms of usable fixation. The collector discards the leading 40% for exactly this reason.
+800ms per target is a reasonable dwell: roughly 300ms for the saccade and overshoot to settle, 500ms of usable fixation. The collector discards the leading 40% for exactly this reason, and since that is a proportion rather than a frame count it works unchanged at 120Hz (96 usable samples) or 200Hz (160).
 
 **Re-show rejected targets rather than dropping them.** A missing target leaves a region of the screen unconstrained, and the polynomial will do something arbitrary there. Re-show at most twice, then abort the calibration and tell the user why: repeated rejection means something is wrong upstream that another attempt will not fix.
 
@@ -52,9 +53,9 @@ from gaze_calibration import Eye, fit_profile
 
 profile = fit_profile(
     {Eye.LEFT: (left_pupil, targets), Eye.RIGHT: (right_pupil, targets)},
-    image_size=(800, 600),
-    screen_size=(1920, 1080),
-    fov_degrees=(36.0, 20.0),
+    image_size=(400, 400),         # Pupil Core eye camera
+    screen_size=(1920, 1200),      # glasses display, NOT the phone panel
+    fov_degrees=(45.0, 29.0),      # HORIZONTAL and VERTICAL, not diagonal
     metadata={"mount": "rev-a", "session": "2026-07-25"},
 )
 ```

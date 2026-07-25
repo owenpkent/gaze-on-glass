@@ -55,9 +55,9 @@ for target in targets:
 # 2. Fit.
 profile = fit_profile(
     {Eye.LEFT: (np.array(left_samples), np.array(kept_targets))},
-    image_size=(800, 600),
-    screen_size=(1920, 1080),
-    fov_degrees=(36.0, 20.0),
+    image_size=(400, 400),         # Pupil Core eye camera
+    screen_size=(1920, 1200),      # glasses display, NOT the phone panel
+    fov_degrees=(45.0, 29.0),      # HORIZONTAL and VERTICAL, not diagonal
     metadata={"mount": "rev-a"},
 )
 
@@ -88,7 +88,9 @@ x_px, y_px = profile.to_pixels(screen)
 
 **A profile is only valid for the physical setup it was captured on.** Camera moved, mount changed, glasses reseated: refit. The `metadata` dict is there so you can record what setup a profile belongs to, which matters more than it sounds once you have a handful of them.
 
-**Confidence in, confidence out.** `FixationCollector` defaults (settle 40% of the burst, confidence floor 0.6, max dispersion 0.02 normalized) are reasonable starting points, not tuned constants. Tune them against your detector once you have one.
+**Confidence in, confidence out.** `FixationCollector` defaults (settle 40% of the burst, confidence floor 0.6, max dispersion 0.02 normalized) are reasonable starting points, not tuned constants. Tune them against your detector once you have one. They are rate-agnostic: the settle fraction is a proportion of the burst, so an 800ms dwell works out to 96 usable samples at 120Hz or 160 at 200Hz without changing anything.
+
+**`fov_degrees` is horizontal and vertical, not diagonal.** Display vendors publish diagonal FOV. Passing the diagonal figure straight through inflates every angular error you report: for a 16:10 panel at 52 deg diagonal, the real values are about 45 and 29 deg, so the diagonal overstates horizontal by 15% and vertical by nearly 80%. Convert first. Normalized and pixel error are unaffected, so if you are unsure, omit `fov_degrees` and quote those instead of quoting a wrong angle.
 
 ## License
 

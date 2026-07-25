@@ -6,11 +6,15 @@ Open-source, single-device gaze tracking for VITURE XR glasses using Pupil Core 
 
 A phone drives the VITURE glasses as a mirrored display over USB-C DP Alt Mode. Pupil Core IR eye cameras are rigidly mounted to the VITURE frame and connect to the same phone over UVC. The phone detects the pupil, maps it to screen coordinates via a calibration, and emits gaze as a stream any local app can consume. No desktop host, no second device, no Pupil Capture.
 
-The core insight: because the glasses mirror the phone framebuffer 1:1, "where the user looks" is just a 2D pupil-to-screen-pixel mapping. No head pose, no world-space gaze vector, no VITURE SDK. That collapses the hard AR coordinate-fusion problem into a flat 2D calibration on a single fixed focal plane.
+The core insight: because the glasses present the phone's framebuffer on a single fixed focal plane, "where the user looks" is just a 2D pupil-to-screen-pixel mapping. No head pose, no world-space gaze vector, no VITURE SDK. That collapses the hard AR coordinate-fusion problem into a flat 2D calibration.
+
+One caveat that took research to surface: **do not rely on display mirroring**. A 20:9 phone panel mirrored onto a 16:10 glasses display gets letterboxed, and normalized screen coordinates then describe the phone panel rather than what the user actually sees. The app renders to the secondary display through Android's `Presentation` API instead, so it owns every pixel in the glasses and the 1:1 premise is exactly true rather than approximately true.
 
 ## Status
 
 Pre-viability. The two hardware/runtime gates below have not been tested yet. Nothing downstream of them is worth building until they pass. The `calibration/` module is implemented and independently usable today, because it is pure math and does not depend on either gate.
+
+Component specifications have been researched against primary sources and are collected in [docs/hardware-reference.md](docs/hardware-reference.md), which also lists the assumptions that research corrected. Read it before buying anything.
 
 ## Why 2D (not pye3d)
 
@@ -29,11 +33,15 @@ A 2D dark-pupil detector feeding a polynomial calibration is the correct design 
 
 ## Hardware
 
-- VITURE XR glasses (birdbath display, USB-C DP Alt Mode video in). Used purely as a mirrored display.
-- Pupil Core eye cameras (UVC, IR, dark-pupil, up to 800x600 @ 30Hz per eye).
-- Android phone running LineageOS (for USB host control, UVC kernel support, and unsandboxed hardware access).
-- USB-C hub that passes DP Alt Mode video out AND a downstream UVC data path in.
-- Custom rigid mount fixing the eye cameras to the VITURE frame.
+Full specifications with citations: [docs/hardware-reference.md](docs/hardware-reference.md).
+
+- **VITURE XR glasses** (Sony Micro-OLED birdbath, USB-C DP Alt Mode video in). Luma Pro is 1920x1200 per eye at 120Hz, 52 deg diagonal FOV; older One/Pro models are 1920x1080 at 43 to 46 deg. No battery: the glasses draw about 5W from the host.
+- **Pupil Core eye cameras**, UVC, IR, dark-pupil, **192x192 @ 200Hz or 400x400 @ 120Hz**, global shutter, 4.5ms latency, **IR illumination integrated into the module**. They enumerate as `Pupil Cam 3 ID0` / `ID1` and are fully UVC compliant. EUR 685 each, so EUR 1,370 for a pair, which is the dominant cost of this build.
+- **Android phone running LineageOS**, for USB host access and an unsandboxed hardware path. It must support DP Alt Mode, which most phones do not; confirm the intersection of DP Alt Mode, a LineageOS build, and USB host before buying.
+- **USB-C hub** passing DP Alt Mode video out AND a downstream UVC data path in.
+- **Custom rigid mount** fixing the eye cameras to the VITURE frame.
+
+400x400 @ 120Hz is probably the better operating point than 192x192 @ 200Hz: a screen-pointing application does not need 200Hz, and the extra spatial resolution converts directly into centroid precision and therefore accuracy. Gate 2 should measure both.
 
 ## The two gating unknowns (resolve these FIRST)
 
@@ -41,22 +49,21 @@ Everything else is engineering you can already do. These two decide whether the 
 
 ### Gate 1: USB topology (video-out + camera-in on one port)
 
-DP Alt Mode and USB data can coexist on one USB-C port, but when DP takes the high-speed lanes, USB data may drop to USB 2.0 (480 Mbps). Whether that happens depends on how many DP lanes the VITURE glasses negotiate:
+DP Alt Mode and USB data can coexist on one USB-C port, but when DP takes all four high-speed lanes, USB data drops to USB 2.0 (480 Mbps). VITURE does not publish how many lanes the glasses negotiate, and no teardown surfaced that answers it. Bandwidth arithmetic says 2-lane is plausible (1920x1200 @ 120Hz needs roughly 8 Gbps and two HBR3 lanes carry about 13 Gbps), which would leave USB 3.x intact, but this is an empirical question.
 
-- 2-lane DP: USB 3.x data path survives alongside video. Comfortable.
-- 4-lane DP: cameras run over USB 2.0. Still likely workable: two 800x600 @ 30Hz MJPEG eye streams fit inside 480 Mbps.
+**The real risk is not raw throughput, it is USB isochronous bandwidth over-reservation.** UVC streams isochronously and reserves guaranteed bus bandwidth from a figure the camera firmware declares, and cameras routinely overstate it by 4x or more. Only ~384 Mbps of a USB 2.0 bus is available for periodic transfers. Two cameras that each over-declare simply fail to open, regardless of how little data they actually send. Pupil Core hits this in practice: Pupil Labs' own Vive add-on docs require disabling or downgrading the headset's built-in camera to free bandwidth for dual 200Hz eye streams.
 
-Full procedure: [docs/gate-1-usb-enumeration-test.md](docs/gate-1-usb-enumeration-test.md).
+Actual payload is comfortable either way, about 59 Mbps per eye uncompressed at 192x192 @ 200Hz and less in MJPEG. If Gate 1 fails, it will be reservation, not bandwidth, and the lever is the bandwidth-factor override that Android UVC libraries expose.
 
-If the webcam enumerates and streams frames while the glasses show video, Pupil Core cameras (also UVC) will too. If it does not, the single-device design fails at the hardware layer and needs a different hub or a fallback host for the cameras.
+Full procedure and mitigations: [docs/gate-1-usb-enumeration-test.md](docs/gate-1-usb-enumeration-test.md).
 
 ### Gate 2: On-device UVC + pupil detection at framerate
 
 Pupil Capture does NOT run on Android. The pipeline is reimplemented natively:
 
-1. Grab UVC frames on Android (libuvc / UVCCamera-style library; requires UVC kernel support, which LineageOS provides).
+1. Grab UVC frames on Android. **Android's Java USB host API cannot do isochronous transfers, and UVC video is isochronous**, so streaming goes through native libusb/libuvc using the file descriptor from `UsbDeviceConnection`. This is userspace: no root, and no kernel UVC driver required. AOSP's built-in external camera path is capped around 30fps at 640x480 and is explicitly not for high-speed streaming, so it is not an option here.
 2. Detect dark pupil per frame with OpenCV (Android SDK, Apache-2): IR image, threshold, find dark blob, fit ellipse, take centroid.
-3. Confirm two eyes at 800x600 @ 30Hz sustains framerate on the target SoC. Thresholding at this size is light; a mid-range SoC should manage, but measure it.
+3. Confirm two eyes sustain framerate on the target SoC. At 192x192 the per-frame pixel work is trivial, but 200Hz binocular means **400 MJPEG decodes per second and a 5ms budget per frame pair**. Per-frame overhead dominates, not thresholding.
 
 Full procedure: [docs/gate-2-on-device-detection.md](docs/gate-2-on-device-detection.md).
 
@@ -86,11 +93,11 @@ Prototype detection first: everything downstream assumes a stable pupil centroid
 
 Standard 2D polynomial approach, per eye. Implemented in [`calibration/`](calibration/) as a dependency-light Python package (numpy only), deliberately framework-agnostic so it can be lifted into any project or ported to the app.
 
-1. Render a grid of fixation targets (9 to 25) on the phone at known normalized positions. The glasses mirror them, so screen space IS what the user sees.
+1. Render a grid of fixation targets (9 to 25) at known normalized positions on the glasses display, via the `Presentation` API so there is no letterboxing between what is rendered and what is seen.
 2. For each target, wait for fixation to settle, record mean pupil position per eye.
 3. Fit two 2nd-order polynomials per eye (one for screen-x, one for screen-y), 6 coefficients each, by least squares.
 4. Combine eyes: average mapped screen positions, or weight by detection confidence.
-5. Validate on held-out targets, report pixel / angular error. Expect 1 to 2 degrees with a rigid mount and well-aimed cameras.
+5. Validate on held-out targets, report pixel / angular error. Expect 1 to 2 degrees with a rigid mount and well-aimed cameras. For context, Pupil Core's own full 3D pipeline is specified at 0.60 degrees, so this target is conservative rather than optimistic. Note that published FOV figures are diagonal; pass horizontal and vertical FOV to the fit or the angular error will be wrong.
 6. Save the calibration profile as JSON.
 
 Walkthrough: [docs/calibration-walkthrough.md](docs/calibration-walkthrough.md).
@@ -103,8 +110,8 @@ gaze-on-glass/
   calibration/     polynomial fit + validation, framework-agnostic, independently usable
   mount/           parametric CAD for the rigid camera mount (OpenSCAD source + STL)
   protocol/        gaze output format spec (local socket / intent / broadcast)
-  docs/            enumeration test, IR illuminator placement, calibration walkthrough,
-                   expected accuracy, slippage caveat
+  docs/            researched hardware reference, the two gate procedures, IR illumination,
+                   calibration walkthrough, expected accuracy, slippage caveat
   README.md
   LICENSE
 ```
@@ -115,8 +122,8 @@ Slippage is the one real weakness of 2D, and the mount is the defense, so treat 
 
 - Aim each IR camera at the eye from below the birdbath combiner (30 to 45 degrees) without occluding the display. Birdbath optics sit close to the eye; clearance is the main challenge.
 - Rigidity is everything: any flex between camera and frame invalidates the calibration. Clamp to the frame, do not rely on friction.
-- IR illuminator placement (dark-pupil, ~850nm) affects glint quality and whether the birdbath coating throws reflections back into the camera.
-- Ship parametric source (OpenSCAD) so others can adjust camera angle and frame tolerances, not just a fixed STL. This is what makes the project buildable on someone else's rig.
+- IR illumination is **integrated into the Pupil Core camera module**, so aiming the camera aims the light. That removes a design variable and adds a constraint: the birdbath combiner is reflective in near-IR and can bounce the module's own illumination straight back into its lens.
+- Ship parametric source (OpenSCAD) so others can adjust camera angle and frame tolerances, not just a fixed STL. This is what makes the project buildable on someone else's rig. Pupil Labs publish their camera mount geometry as reference (LGPL-3.0, so measure the interface rather than copying the model).
 - Expect several print iterations to get angle and clearance right.
 
 See [mount/](mount/).
