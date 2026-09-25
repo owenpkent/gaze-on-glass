@@ -246,7 +246,7 @@ Nothing else in this document is speculative: every other figure traces to a cit
 | LineageOS required for unsandboxed hardware access | **Stock Android is sufficient and safer.** No root needed anywhere, and custom ROMs are a documented cause of DP video-out breaking | Host phone choice, Gate 1 setup |
 | Recommend saki4510t/UVCCamera | Dormant since 2017; use **ernestp/AndroidUSBCamera** or shiyinghan/UVCAndroid | android-app plan |
 | Bandwidth is the Gate 1 risk | **Isochronous over-reservation** is the Gate 1 risk; raw throughput is comfortable | Gate 1 procedure and mitigations |
-| IR illuminator placement is a design task | Illumination is **integrated into the camera module** | ir-illuminator-placement.md scope |
+| IR illuminator placement is a design task | Illumination is **integrated into the camera module** | [ir-illumination-and-optics.md](ir-illumination-and-optics.md) scope |
 | "Glasses mirror the phone 1:1" | True only if not letterboxed; use the **`Presentation` API** on the secondary display | Core premise, calibration validity |
 | FOV as a single number | Published FOV is **diagonal**; the calibration module needs horizontal and vertical | Angular error reporting |
 | Cost unstated | **EUR 1,370** for a binocular camera pair | Feasibility |
